@@ -17,9 +17,9 @@ extern UART_HandleTypeDef huart2;
 #define wifi_uart &huart1
 #define pc_uart &huart2
 
+float chuj;
 
 char buffer[20];
-float temp;
 
 char *Basic_inclusion = "<!DOCTYPE html> 							\
 						<html> 										\
@@ -36,6 +36,7 @@ char *LED_ON = "<p>LED Status: ON</p><a class=\"button button-off\" href=\"/ledo
 char *LED_OFF = "<p>LED1 Status: OFF</p><a class=\"button button-on\" href=\"/ledon\">ON</a>";
 char *Terminate = "</body></html>";
 
+float measure;
 /*****************************************************************************************************************************************/
 
 void ESP_Init (char *SSID, char *PASSWD)
@@ -127,7 +128,7 @@ void Server_Handle (char *str, int Link_ID)
 		sprintf (datatosend, Basic_inclusion);
 		strcat(datatosend, "<p>");
 		char buffer[100];
-		snprintf(buffer, 10, "%.1f", temp);
+		snprintf(buffer, 10, "%.2f", measure);
 		strcat(datatosend, buffer);
 		strcat(datatosend, "</p>");
 		strcat(datatosend, Terminate);
@@ -160,4 +161,10 @@ void Server_Start ()
 		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, 0);
 		Server_Handle("/ ", Link_ID);
 	}
+}
+
+
+void SetTemperature(float temp){
+	measure = temp;
+	measure = 22.22;
 }
