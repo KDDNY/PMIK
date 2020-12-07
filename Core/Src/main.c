@@ -371,11 +371,13 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 	if(htim->Instance == TIM4){
-		HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+//		HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
 		bmp280_read_float(&bmp280, &temperature, &pressure, &humidity);
-		size = sprintf((char *)Data,"Temperature: %.2f C\n",temperature);
-		HAL_UART_Transmit(&huart2, Data, size, 1000);
-		SetTemperature(temperature);
+//		size = sprintf((char *)Data,"Temperature: %.2f C\n",temperature);
+//		HAL_UART_Transmit(&huart2, Data, size, 1000);
+//		float *var = &temperature;
+//		SetTemperature(temperature);
+		SetTemperaturePointer(&temperature);
 	}
 }
 /* USER CODE END 4 */

@@ -17,7 +17,6 @@ extern UART_HandleTypeDef huart2;
 #define wifi_uart &huart1
 #define pc_uart &huart2
 
-float chuj;
 
 char buffer[20];
 
@@ -165,6 +164,12 @@ void Server_Start ()
 
 
 void SetTemperature(float temp){
-	measure = temp;
-	measure = 22.22;
+//	measure = temp;
+}
+
+//float *pomiar;
+
+void SetTemperaturePointer(float* var){
+//	pomiar = var;
+	measure = *var;
 }
