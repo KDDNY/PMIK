@@ -30,9 +30,6 @@ char *Basic_inclusion = "<!DOCTYPE html> 							\
 						<p>Temperatura odczytana z czujnika: </p> 	\
 						</body> 									\
 						</html>";
-
-char *LED_ON = "<p>LED Status: ON</p><a class=\"button button-off\" href=\"/ledoff\">OFF</a>";
-char *LED_OFF = "<p>LED1 Status: OFF</p><a class=\"button button-on\" href=\"/ledon\">ON</a>";
 char *Terminate = "</body></html>";
 
 float measure;
@@ -141,35 +138,9 @@ void Server_Start ()
 	while (!(Get_after("+IPD,", 1, &Link_ID, wifi_uart)));
 	Link_ID -= 48;
 	while (!(Copy_upto(" HTTP/1.1", buftocopyinto, wifi_uart)));
-	if (Look_for("/ledon", buftocopyinto) == 1)
-	{
-		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, 1);
-		Server_Handle("/ledon",Link_ID);
-	}
-
-	else if (Look_for("/ledoff", buftocopyinto) == 1)
-	{
-		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, 0);
-		Server_Handle("/ledoff",Link_ID);
-	}
-
-	else if (Look_for("/favicon.ico", buftocopyinto) == 1);
-
-	else
-	{
-		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, 0);
-		Server_Handle("/ ", Link_ID);
-	}
+	Server_Handle("/ ", Link_ID);
 }
-
-
-void SetTemperature(float temp){
-//	measure = temp;
-}
-
-//float *pomiar;
 
 void SetTemperaturePointer(float* var){
-//	pomiar = var;
 	measure = *var;
 }

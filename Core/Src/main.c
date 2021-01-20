@@ -114,11 +114,13 @@ int main(void)
   bmp280.addr = BMP280_I2C_ADDRESS_0;
   bmp280.i2c = &hi2c1;
 
-  while (!bmp280_init(&bmp280, &bmp280.params)) {
-    		size = sprintf((char *)Data, "BMP280 initialization failed\n");
-    		HAL_UART_Transmit(&huart2, Data, size, 1000);
-    		HAL_Delay(2000);
-    }
+
+  bmp280_init(&bmp280, &bmp280.params);
+//  while (!bmp280_init(&bmp280, &bmp280.params)) {
+//    		size = sprintf((char *)Data, "BMP280 initialization failed\n");
+//    		HAL_UART_Transmit(&huart2, Data, size, 1000);
+//    		HAL_Delay(2000);
+//    }
     bool bme280p = bmp280.id == BME280_CHIP_ID;
     size = sprintf((char *)Data, "BMP280: found %s\n", bme280p ? "BME280" : "BMP280");
     HAL_UART_Transmit(&huart2, Data, size, 1000);
@@ -371,7 +373,7 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 	if(htim->Instance == TIM4){
-//		HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+		HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
 		bmp280_read_float(&bmp280, &temperature, &pressure, &humidity);
 //		size = sprintf((char *)Data,"Temperature: %.2f C\n",temperature);
 //		HAL_UART_Transmit(&huart2, Data, size, 1000);
