@@ -33,7 +33,12 @@ char *Basic_inclusion = "<!DOCTYPE html> 							\
 char *Terminate = "</body></html>";
 
 float measure;
+char* ip_ad;
 /*****************************************************************************************************************************************/
+
+char* getIP(){
+	return ip_ad;
+}
 
 void ESP_Init (char *SSID, char *PASSWD)
 {
@@ -81,6 +86,7 @@ void ESP_Init (char *SSID, char *PASSWD)
 	while (!(Wait_for("OK\r\n", wifi_uart)));
 	int len = strlen (buffer);
 	buffer[len-1] = '\0';
+	ip_ad = buffer;
 	sprintf (data, "IP ADDR: %s\n\n", buffer);
 	Uart_sendstring(data, pc_uart);
 
