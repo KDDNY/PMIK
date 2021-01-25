@@ -27,8 +27,8 @@ char *Basic_inclusion = "<!DOCTYPE html> 							\
 						</head> 									\
 						<body> 										\
 						<h1>PMIK Projekt</h1> 						\
-						<p>Temperatura odczytana z czujnika: </p> 	\
-						</body> 									\
+						<p>Temperatura odczytana z czujnika: </p>	\
+		 				</body> 									\
 						</html>";
 char *Terminate = "</body></html>";
 

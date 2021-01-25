@@ -123,18 +123,18 @@ int main(void)
     size = sprintf((char *)Data, "BMP280: found %s\n", bme280p ? "BME280" : "BMP280");
     HAL_UART_Transmit(&huart2, Data, size, 1000);
 
-    disp.addr = (0x27 << 1);
+      disp.addr = (0x27 << 1);
       disp.bl = true;
       lcd_init(&disp);
-
-      char* front = "ip:";
+      lcd_prog(&disp);
+      char* front = "  ";
       char* addr = getIP();
       char* txtlcd;
-      txtlcd = malloc(strlen(front)+1+4); /* make space for the new string (should check the return value ...) */
-      strcpy(txtlcd, front); /* copy name into the new var */
-      strcat(txtlcd, addr); /* add the extension */
+      txtlcd = malloc(strlen(front)+1+4);
+      strcpy(txtlcd, front);
+      strcat(txtlcd, addr);
       sprintf(disp.f_line, txtlcd);
-      sprintf(disp.s_line, "%.2f", temperature);
+      sprintf(disp.s_line, "Temp.: %.2fC%c", temperature, '\x1');
       lcd_display(&disp);
 
       is_LCD_avaliable = true;
@@ -204,19 +204,26 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 	if(htim->Instance == TIM4){
-		HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+//		HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
 		bmp280_read_float(&bmp280, &temperature, &pressure, &humidity);
 //		size = sprintf((char *)Data,"Temperature: %.2f C\n",temperature);
+		float temp = temperature;
 		SetTemperaturePointer(&temperature);
 		if(is_LCD_avaliable){
-		/*	lcd_clear(&disp);
-			sprintf((char *)disp.s_line, "a to druga linia");
-			lcd_display(&disp);*/
+			sprintf(disp.s_line, "Temp.:%.2fC", temp);
+		    lcd_display(&disp);
 		}
 	}
 }
 /* USER CODE END 4 */
-
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
+	if(GPIO_Pin == Button_Pin){
+		HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+		sprintf((char *)disp.f_line, "");
+		sprintf((char *)disp.s_line, "     ******");
+		lcd_display(&disp);
+	}
+}
 /**
   * @brief  This function is executed in case of error occurrence.
   * @retval None

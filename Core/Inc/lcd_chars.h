@@ -20,51 +20,20 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef INC_LCD_I2C_H_
-#define INC_LCD_I2C_H_
+#ifndef INC_LCD_CHARS_H_
+#define INC_LCD_CHARS_H_
 
-#include <stdbool.h>
-#include <stdint.h>
+#define CG_FIRST_CHAR	0x40
 
-/*
- *         PCF8574 <-> HD44780
- *
- * I2C I/O   P7 P6 P5 P4 P3 P2 P1 P0
- * LCD       D7 D6 D5 D4 BL EN RW RS
- *
- * */
-
-#define HI2C_DEF hi2c2
-
-#define RS_PIN 0x01
-#define RW_PIN 0x02
-#define EN_PIN 0x04
-#define BL_PIN 0x08
-
-#define INIT_8_BIT_MODE	0x30
-#define INIT_4_BIT_MODE	0x02
-
-#define CLEAR_LCD	0x01
-
-#define UNDERLINE_OFF_BLINK_OFF		0x0C
-#define UNDERLINE_OFF_BLINK_ON		0x0D
-#define UNDERLINE_ON_BLINK_OFF		0x0E
-#define UNDERLINE_ON_BLINK_ON		0x0F
-
-#define FIRST_CHAR_LINE_1	0x80
-#define FIRST_CHAR_LINE_2	0xC0
-
-struct lcd_disp {
-	uint8_t addr;
-	char f_line[17];
-	char s_line[17];
-	bool bl;
+uint8_t user_chars[8][8] = {
+		{0xc, 0x12, 0x12, 0xc, 0x0, 0x0, 0x0},				//stopień
+		{0x02, 0x04, 0x0E, 0x10, 0x10, 0x11, 0x0E, 0x00},	//c ogonek
+		{0x00, 0x00, 0x0E, 0x11, 0x1F, 0x10, 0x0E, 0x02},	//e ogonek
+		{0x0C, 0x04, 0x06, 0x0C, 0x04, 0x04, 0x0E, 0x00},	//l kreska
+		{0x02, 0x04, 0x16, 0x19, 0x11, 0x11, 0x11, 0x00},	//n ogonek
+		{0x02, 0x04, 0x0E, 0x11, 0x11, 0x11, 0x0E, 0x00},	//o ogonek
+		{0x02, 0x04, 0x0E, 0x10, 0x0E, 0x01, 0x1E, 0x00},	//s ogonek
+		{0x02, 0x04, 0x1F, 0x02, 0x04, 0x08, 0x1F, 0x00}	//z ogonek
 };
 
-void lcd_init(struct lcd_disp * lcd);
-void lcd_write(uint8_t addr, uint8_t data, uint8_t xpin);
-void lcd_display(struct lcd_disp * lcd);
-void lcd_clear(struct lcd_disp * lcd);
-void lcd_prog(struct lcd_disp * lcd);
-
-#endif /* INC_LCD_I2C_H_ */
+#endif /* INC_LCD_CHARS_H_ */
