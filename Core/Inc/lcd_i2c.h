@@ -34,7 +34,7 @@
  *
  * */
 
-#define HI2C_DEF hi2c2
+#define HI2C_DEF hi2c1
 
 #define RS_PIN 0x01
 #define RW_PIN 0x02

@@ -32,8 +32,8 @@ char *Basic_inclusion = "<!DOCTYPE html> 							\
 						</html>";
 char *Terminate = "</body></html>";
 
-float measure;
 char* ip_ad;
+extern char out[5] = {'1','1','.','1','1'};
 /*****************************************************************************************************************************************/
 
 char* getIP(){
@@ -130,7 +130,7 @@ void Server_Handle (char *str, int Link_ID)
 		sprintf (datatosend, Basic_inclusion);
 		strcat(datatosend, "<p>");
 		char buffer[100];
-		snprintf(buffer, 10, "%.2f", measure);
+		snprintf(buffer, 10, "%s", out);
 		strcat(datatosend, buffer);
 		strcat(datatosend, "</p>");
 		strcat(datatosend, Terminate);
@@ -147,6 +147,10 @@ void Server_Start ()
 	Server_Handle("/ ", Link_ID);
 }
 
-void SetTemperaturePointer(float* var){
-	measure = *var;
+void setOut(char in[]){
+	out[0] = in[0];
+	out[1] = in[1];
+	out[2] = in[2];
+	out[3] = in[3];
+	out[4] = in[4];
 }

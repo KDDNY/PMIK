@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include "lcd_i2c.h"
 #include <stdbool.h>
+#include "UartRingbuffer_multi.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -51,12 +52,17 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+extern UART_HandleTypeDef huart3;
+#define bmp_uart &huart3
+
 float pressure, temperature, humidity;
 bool is_LCD_avaliable = false;
-BMP280_HandleTypedef bmp280;
 uint16_t size;
 uint8_t Data[256];
 struct lcd_disp disp;
+char output[5] = {'0','0','0','0','0'};
+int i = 0;
+int x = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -102,25 +108,12 @@ int main(void)
   MX_USART1_UART_Init();
   MX_I2C1_Init();
   MX_TIM4_Init();
-  MX_I2C2_Init();
+  MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim4);
 
   ESP_Init("HUAWEI-B315-4735","RE7EF6GRR7L");
 
-  bmp280_init_default_params(&bmp280.params);
-  bmp280.addr = BMP280_I2C_ADDRESS_0;
-  bmp280.i2c = &hi2c1;
-
-
-  bmp280_init(&bmp280, &bmp280.params);
-//  while (!bmp280_init(&bmp280, &bmp280.params)) {
-//    		size = sprintf((char *)Data, "BMP280 initialization failed\n");
-//    		HAL_UART_Transmit(&huart2, Data, size, 1000);
-//    		HAL_Delay(2000);
-//    }
-    bool bme280p = bmp280.id == BME280_CHIP_ID;
-    size = sprintf((char *)Data, "BMP280: found %s\n", bme280p ? "BME280" : "BMP280");
     HAL_UART_Transmit(&huart2, Data, size, 1000);
 
       disp.addr = (0x27 << 1);
@@ -134,7 +127,7 @@ int main(void)
       strcpy(txtlcd, front);
       strcat(txtlcd, addr);
       sprintf(disp.f_line, txtlcd);
-      sprintf(disp.s_line, "Temp.: %.2fC%c", temperature, '\x1');
+      sprintf(disp.s_line, "Temp.:");
       lcd_display(&disp);
 
       is_LCD_avaliable = true;
@@ -147,19 +140,8 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-//	  bmp280_read_float(&bmp280, &temperature, &pressure, &humidity);
 	  Server_Start();
-	//  while (!bmp280_read_float(&bmp280, &temperature, &pressure, &humidity)) {
-	//  	 size = sprintf((char *)Data, "Temperature/pressure reading failed\n");
-	//  	 HAL_UART_Transmit(&huart2, Data, size, 1000);
-	//  	 HAL_Delay(2000);
-	//  }
-	  //ten frafment służy do drukowania
-	//  size = sprintf((char *)Data,"Temperature: %.2f C",temperature);
-	//  HAL_UART_Transmit(&huart2, Data, size, 1000);
-	//  size = sprintf((char *)Data, "\n");
-	//  HAL_UART_Transmit(&huart2, Data, size, 1000);
-	//  HAL_Delay(2000);
+
   }
   /* USER CODE END 3 */
 }
@@ -204,26 +186,33 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 	if(htim->Instance == TIM4){
-//		HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
-		bmp280_read_float(&bmp280, &temperature, &pressure, &humidity);
-//		size = sprintf((char *)Data,"Temperature: %.2f C\n",temperature);
-		float temp = temperature;
-		SetTemperaturePointer(&temperature);
+		HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
 		if(is_LCD_avaliable){
-			sprintf(disp.s_line, "Temp.:%.2fC", temp);
-		    lcd_display(&disp);
+				if(IsDataAvailable(bmp_uart)){
+					int data = Uart_read(bmp_uart);
+					Uart_write(data,bmp_uart);
+					if(x = 10) {
+					int j = 0;
+					while(getBuffer()->buffer[i]!=';'){
+						output[j] = getBuffer()->buffer[i];
+						j++;
+						if(j>=5) break;
+						i++;
+						if(i >= 512) i = 0;
+					}
+					i++;
+					x = 0;
+					}
+					x++;
+			}
+			sprintf(disp.s_line, "Temp.:%sC", output);
+			lcd_display(&disp);
+			setOut(output);
 		}
 	}
 }
 /* USER CODE END 4 */
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
-	if(GPIO_Pin == Button_Pin){
-		HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
-		sprintf((char *)disp.f_line, "");
-		sprintf((char *)disp.s_line, "     ******");
-		lcd_display(&disp);
-	}
-}
+
 /**
   * @brief  This function is executed in case of error occurrence.
   * @retval None

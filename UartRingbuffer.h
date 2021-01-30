@@ -8,11 +8,10 @@
 #ifndef UARTRINGBUFFER_H_
 #define UARTRINGBUFFER_H_
 
-
 #include "stm32f1xx_hal.h"
 
 /* change the size of the buffer */
-#define UART_BUFFER_SIZE 512
+#define UART_BUFFER_SIZE 64
 
 typedef struct
 {
@@ -20,32 +19,32 @@ typedef struct
   volatile unsigned int head;
   volatile unsigned int tail;
 } ring_buffer;
+unsigned char buff[64];
 
-unsigned char buff[UART_BUFFER_SIZE];
 
-ring_buffer* getBuffer();
 
-/* reads the data in the rx_buffer and increment the tail count in rx_buffer of the given UART */
-int Uart_read(UART_HandleTypeDef *uart);
-
-/* writes the data to the tx_buffer and increment the head count in tx_buffer */
-void Uart_write(int c, UART_HandleTypeDef *uart);
-
-/* function to send the string to the uart */
-void Uart_sendstring(const char *s, UART_HandleTypeDef *uart);
-
-/* Print a number with any base
- * base can be 10, 8 etc*/
-void Uart_printbase (long n, uint8_t base, UART_HandleTypeDef *uart);
 
 /* Initialize the ring buffer */
 void Ringbuf_init(void);
 
-/* Resets the entire ring buffer, the new data will start from position 0 */
-void Uart_flush (UART_HandleTypeDef *uart);
+/* reads the data in the rx_buffer and increment the tail count in rx_buffer */
+int Uart_read(void);
 
-/* checks if the data is available to read in the rx_buffer of the uart */
-int IsDataAvailable(UART_HandleTypeDef *uart);
+/* writes the data to the tx_buffer and increment the head count in tx_buffer */
+void Uart_write(int c);
+
+/* function to send the string to the uart */
+void Uart_sendstring(const char *s);
+
+/* Print a number with any base
+ * base can be 10, 8 etc*/
+void Uart_printbase (long n, uint8_t base);
+
+
+
+/* Checks if the data is available to read in the rx_buffer */
+int IsDataAvailable(void);
+
 
 /* Look for a particular string in the given buffer
  * @return 1, if the string is found and -1 if not found
@@ -60,43 +59,53 @@ int Look_for (char *str, char *buffertolookinto);
  */
 void GetDataFromBuffer (char *startString, char *endString, char *buffertocopyfrom, char *buffertocopyinto);
 
-/* Peek for the data in the Rx Bffer without incrementing the tail count
+
+/* Resets the entire ring buffer, the new data will start from position 0 */
+void Uart_flush (void);
+
+/* Peek for the data in the Rx Bffer without incrementing the tail count 
 * Returns the character
-* USAGE: if (Uart_peek () == 'M') do something
+* USAGE: if (Uart_peek () == 'M') do something 
 */
-int Uart_peek(UART_HandleTypeDef *uart);
+int Uart_peek();
 
 
-/* Copy the data from the Rx buffer into the buffer, Upto and including the entered string
+/* Copy the data from the Rx buffer into the bufferr, Upto and including the entered string 
 * This copying will take place in the blocking mode, so you won't be able to perform any other operations
 * Returns 1 on success and -1 otherwise
-* USAGE: while (!(Copy_Upto ("some string", buffer, uart)));
+* USAGE: while (!(Copy_Upto ("some string", buffer)));
 */
-int Copy_upto (char *string, char *buffertocopyinto, UART_HandleTypeDef *uart);
+int Copy_upto (char *string, char *buffertocopyinto);
 
 
 /* Copies the entered number of characters (blocking mode) from the Rx buffer into the buffer, after some particular string is detected
 * Returns 1 on success and -1 otherwise
-* USAGE: while (!(Get_after ("some string", 6, buffer, uart)));
+* USAGE: while (!(Get_after ("some string", 6, buffer)));
 */
-int Get_after (char *string, uint8_t numberofchars, char *buffertosave, UART_HandleTypeDef *uart);
+int Get_after (char *string, uint8_t numberofchars, char *buffertosave);
+
 
 /* Wait until a paricular string is detected in the Rx Buffer
 * Return 1 on success and -1 otherwise
-* USAGE: while (!(Wait_for("some string", uart)));
+* USAGE: while (!(Wait_for("some string")));
 */
-int Wait_for (char *string, UART_HandleTypeDef *uart);
+int Wait_for (char *string);
+
 
 /* the ISR for the uart. put it in the IRQ handler */
 void Uart_isr (UART_HandleTypeDef *huart);
 
+
+
 /*** Depreciated For now. This is not needed, try using other functions to meet the requirement ***/
 /* get the position of the given string within the incoming data.
- * It returns the position, where the string ends
+ * It returns the position, where the string ends 
  */
-/* get the position of the given string in the given UART's incoming data.
- * It returns the position, where the string ends */
-//int16_t Get_position (char *string, UART_HandleTypeDef *uart);
+//uint16_t Get_position (char *string);
+
+/* once you hit 'enter' (\r\n), it copies the entire string to the buffer*/
+//void Get_string (char *buffer);
+
 
 
 #endif /* UARTRINGBUFFER_H_ */

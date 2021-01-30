@@ -13,9 +13,11 @@
 
 extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart2;
+extern UART_HandleTypeDef huart3;
 
 #define device_uart &huart1
 #define pc_uart &huart2
+#define bmp_uart &huart3
 
 /* put the following in the ISR 
 
@@ -30,13 +32,18 @@ ring_buffer rx_buffer1 = { { 0 }, 0, 0};
 ring_buffer tx_buffer1 = { { 0 }, 0, 0};
 ring_buffer rx_buffer2 = { { 0 }, 0, 0};
 ring_buffer tx_buffer2 = { { 0 }, 0, 0};
+ring_buffer rx_buffer3 = { { 0 }, 0, 0};
+ring_buffer tx_buffer3 = { { 0 }, 0, 0};
 
 ring_buffer *_rx_buffer1;
 ring_buffer *_tx_buffer1;
 ring_buffer *_rx_buffer2;
 ring_buffer *_tx_buffer2;
+ring_buffer *_rx_buffer3;
+ring_buffer *_tx_buffer3;
 
 void store_char (unsigned char c, ring_buffer *buffer);
+
 
 
 void Ringbuf_init(void)
@@ -45,14 +52,25 @@ void Ringbuf_init(void)
   _tx_buffer1 = &tx_buffer1;
   _rx_buffer2 = &rx_buffer2;
   _tx_buffer2 = &tx_buffer2;
+  _rx_buffer3 = &rx_buffer3;
+  _tx_buffer3 = &tx_buffer3;
 
   /* Enable the UART Error Interrupt: (Frame error, noise error, overrun error) */
   __HAL_UART_ENABLE_IT(device_uart, UART_IT_ERR);
   __HAL_UART_ENABLE_IT(pc_uart, UART_IT_ERR);
+  __HAL_UART_ENABLE_IT(bmp_uart, UART_IT_ERR);
+
 
   /* Enable the UART Data Register not empty Interrupt */
   __HAL_UART_ENABLE_IT(device_uart, UART_IT_RXNE);
   __HAL_UART_ENABLE_IT(pc_uart, UART_IT_RXNE);
+  __HAL_UART_ENABLE_IT(bmp_uart, UART_IT_RXNE);
+
+
+}
+
+ring_buffer* getBuffer(){
+	return _tx_buffer3;
 }
 
 void store_char(unsigned char c, ring_buffer *buffer)
@@ -167,6 +185,11 @@ void Uart_flush (UART_HandleTypeDef *uart)
 		memset(_rx_buffer2->buffer,'\0', UART_BUFFER_SIZE);
 		_rx_buffer2->head = 0;
 	}
+	if (uart == bmp_uart)
+	{
+		memset(_rx_buffer3->buffer,'\0', UART_BUFFER_SIZE);
+		_rx_buffer3->head = 0;
+	}
 }
 
 
@@ -194,6 +217,18 @@ int Uart_peek(UART_HandleTypeDef *uart)
 		  {
 		    return _rx_buffer2->buffer[_rx_buffer2->tail];
 		  }
+	}
+
+	else if (uart == bmp_uart)
+	{
+			  if(_rx_buffer3->head == _rx_buffer3->tail)
+			  {
+			    return -1;
+			  }
+			  else
+			  {
+			    return _rx_buffer3->buffer[_rx_buffer3->tail];
+			  }
 	}
 
 	return -1;
@@ -231,6 +266,23 @@ int Uart_read(UART_HandleTypeDef *uart)
 		  }
 	}
 
+	else if (uart == bmp_uart)
+		{
+			  // if the head isn't ahead of the tail, we don't have any characters
+			  if(_rx_buffer3->head == _rx_buffer3->tail)
+			  {
+			    return -1;
+			  }
+			  else
+			  {
+			    unsigned char c = _rx_buffer3->buffer[_rx_buffer3->tail];
+			    buff[_rx_buffer3->tail] = c;
+			    _rx_buffer3->tail = (unsigned int)(_rx_buffer3->tail + 1) % UART_BUFFER_SIZE;
+			    return c;
+			  }
+		}
+
+
 	else return -1;
 }
 
@@ -265,6 +317,20 @@ void Uart_write(int c, UART_HandleTypeDef *uart)
 
 			__HAL_UART_ENABLE_IT(pc_uart, UART_IT_TXE); // Enable UART transmission interrupt
 			}
+
+		else if (uart == bmp_uart){
+					int i = (_tx_buffer3->head + 1) % UART_BUFFER_SIZE;
+
+					// If the output buffer is full, there's nothing for it other than to
+					// wait for the interrupt handler to empty it a bit
+					// ???: return 0 here instead?
+					while (i == _tx_buffer3->tail);
+
+					_tx_buffer3->buffer[_tx_buffer3->head] = (uint8_t)c;
+					_tx_buffer3->head = i;
+
+					__HAL_UART_ENABLE_IT(bmp_uart, UART_IT_TXE); // Enable UART transmission interrupt
+					}
 	}
 }
 
@@ -272,6 +338,7 @@ int IsDataAvailable(UART_HandleTypeDef *uart)
 {
 	if (uart == device_uart) return (uint16_t)(UART_BUFFER_SIZE + _rx_buffer1->head - _rx_buffer1->tail) % UART_BUFFER_SIZE;
 	else if (uart == pc_uart) return (uint16_t)(UART_BUFFER_SIZE + _rx_buffer2->head - _rx_buffer2->tail) % UART_BUFFER_SIZE;
+	else if (uart == bmp_uart) return (uint16_t)(UART_BUFFER_SIZE + _rx_buffer3->head - _rx_buffer3->tail) % UART_BUFFER_SIZE;
 	return -1;
 }
 
@@ -413,6 +480,10 @@ void Uart_isr (UART_HandleTypeDef *huart)
            	store_char (c, _rx_buffer2);  // store data in buffer
         }
 
+        else if (huart == bmp_uart)
+                {
+                   	store_char (c, _rx_buffer3);  // store data in buffer
+                }
         return;
     }
 
@@ -482,6 +553,38 @@ void Uart_isr (UART_HandleTypeDef *huart)
 
         	    }
         	}
+
+    	else if (huart == bmp_uart){
+    	        	if(tx_buffer3.head == tx_buffer3.tail)
+    	        	    {
+    	        	      // Buffer empty, so disable interrupts
+    	        	      __HAL_UART_DISABLE_IT(huart, UART_IT_TXE);
+
+    	        	    }
+
+    	        	 else
+    	        	    {
+    	        	      // There is more data in the output buffer. Send the next byte
+    	        	      unsigned char c = tx_buffer3.buffer[tx_buffer3.tail];
+    	        	      tx_buffer3.tail = (tx_buffer3.tail + 1) % UART_BUFFER_SIZE;
+
+    	        	      /******************
+    	        	      *  @note   PE (Parity error), FE (Framing error), NE (Noise error), ORE (Overrun
+    	        	      *          error) and IDLE (Idle line detected) flags are cleared by software
+    	        	      *          sequence: a read operation to USART_SR register followed by a read
+    	        	      *          operation to USART_DR register.
+    	        	      * @note   RXNE flag can be also cleared by a read to the USART_DR register.
+    	        	      * @note   TC flag can be also cleared by software sequence: a read operation to
+    	        	      *          USART_SR register followed by a write operation to USART_DR register.
+    	        	      * @note   TXE flag is cleared only by a write to the USART_DR register.
+
+    	        	      *********************/
+
+    	        	      huart->Instance->SR;
+    	        	      huart->Instance->DR = c;
+
+    	        	    }
+    	        	}
     	return;
     }
 }

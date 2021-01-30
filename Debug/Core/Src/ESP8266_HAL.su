@@ -1,6 +1,6 @@
 ESP8266_HAL.c:39:7:getIP	4	static
 ESP8266_HAL.c:43:6:ESP_Init	104	static
 ESP8266_HAL.c:112:5:Server_Send	112	static
-ESP8266_HAL.c:127:6:Server_Handle	1160	static
+ESP8266_HAL.c:127:6:Server_Handle	1144	static
 ESP8266_HAL.c:140:6:Server_Start	80	static
-ESP8266_HAL.c:150:6:SetTemperaturePointer	16	static
+ESP8266_HAL.c:150:6:setOut	16	static
